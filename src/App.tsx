@@ -22,9 +22,9 @@ const RenderIndicator: React.FC<React.PropsWithChildren> = (
   );
 };
 
-const SearchInput: React.FC<{
+const FilterInput: React.FC<{
   onChange: (term: string) => void;
-}> = (props) => {
+}> = React.memo((props) => {
   const [term, setTerm] = React.useState(``);
 
   return (
@@ -37,10 +37,10 @@ const SearchInput: React.FC<{
       <button onClick={() => props.onChange(term)}>Search</button>
     </RenderIndicator>
   );
-}
+})
 
 const PageSizeInput: React.FC<{ onChange: (pageSize: number) => void }> =
-  (props) => {
+  React.memo((props) => {
     const [size, setSize] = React.useState(10);
 
     return (
@@ -55,13 +55,13 @@ const PageSizeInput: React.FC<{ onChange: (pageSize: number) => void }> =
         <button onClick={() => props.onChange(size)}>Save page size</button>
       </RenderIndicator>
     );
-  }
+  })
 
 const List: React.FC<{
   list: readonly string[];
   onAddEntry: (name: string) => void;
   onRemoveEntry: (name: string) => void;
-}> = (props) => {
+}> = React.memo((props) => {
   const [newName, setNewName] = React.useState(``);
 
   return (
@@ -82,7 +82,7 @@ const List: React.FC<{
       </div>
     </RenderIndicator>
   );
-}
+})
 
 function App() {
   const [options, setOptions] = React.useState({
@@ -91,11 +91,11 @@ function App() {
     showHeader: true,
   });
 
-  const setFilter = 
-    (filter: string) => setOptions((current) => ({ ...current, filter }))
+  const setFilter =
+    React.useCallback((filter: string) => setOptions((current) => ({ ...current, filter })), [])
 
-  const setPageSize = 
-    (pageSize: number) => setOptions((current) => ({ ...current, pageSize }))
+  const setPageSize =
+    React.useCallback((pageSize: number) => setOptions((current) => ({ ...current, pageSize })), [])
 
   const setShowHeader: React.ChangeEventHandler<HTMLInputElement> = ({
     target,
@@ -108,18 +108,18 @@ function App() {
     `ecok`,
   ]);
 
-  const onAddEntry = (name: string) =>
-    setList((current) => current.concat(name))
+  const onAddEntry = React.useCallback((name: string) =>
+    setList((current) => current.concat(name)), [])
 
-  const onRemoveEntry = (name: string) =>
+  const onRemoveEntry = React.useCallback((name: string) =>
     setList((current) => {
       const index = current.indexOf(name);
       return current.filter((_, i) => i !== index);
-    })
+    }), [])
 
-  const filteredList = list
+  const filteredList = React.useMemo(() => list
     .filter((name) => name.toLowerCase().includes(options.filter.toLowerCase()))
-    .slice(0, options.pageSize)
+    .slice(0, options.pageSize), [list, options.pageSize, options.filter])
 
   return (
     <div className="app">
@@ -135,7 +135,7 @@ function App() {
           </label>
         </div>
         <div style={{ display: options.showHeader ? `flex` : `none` }}>
-          <SearchInput onChange={setFilter} />
+          <FilterInput onChange={setFilter} />
           <PageSizeInput onChange={setPageSize} />
         </div>
       </header>
